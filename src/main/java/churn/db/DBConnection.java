@@ -8,10 +8,7 @@ package churn.db;
 import java.sql.DriverManager;
 import java.sql.Connection;
 import java.sql.SQLException;
-/**
- * Class representing an DBConnection.
- * @author Rishanthan
- */
+
 public class DBConnection {
     
     private static Connection connection = null;

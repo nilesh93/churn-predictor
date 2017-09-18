@@ -4,3 +4,106 @@ extends layout
 block content
 
     h1  Welcome to Churn Predictor
+
+    h3 Please insert the customer details below to get a prediction
+
+    br
+
+    form#customer(class="form-horizontal", onsubmit="return save()")
+
+        div.form-group
+            label(class="control-label col-md-2") Customer ID
+            div.col-md-10
+                input(type="number" class="form-control input-sm" name="customerId", required="true")
+
+        div.form-group
+            label(class="control-label col-md-2") Surname
+            div.col-md-10
+                input(type="text" class="form-control input-sm" name="surname", required="true")
+
+        div.form-group
+            label(class="control-label col-md-2") Credit Score
+            div.col-md-10
+                input(type="number" class="form-control input-sm" name="creditScore", required="true")
+
+        div.form-group
+            label(class="control-label col-md-2") Geography
+            div.col-md-10
+                input(type="string select" class="form-control input-sm" name="geography", required="true")
+
+        div.form-group
+            label(class="control-label col-md-2") Gender
+            div.col-md-10
+                select(class="form-control input-sm" name="gender", required="true")
+                    option(value="male") Male
+                    option(value="female") Female
+
+        div.form-group
+            label(class="control-label col-md-2") Age
+            div.col-md-10
+                input(type="number" class="form-control input-sm" name="age", required="true")
+
+        div.form-group
+            label(class="control-label col-md-2") Tenure
+            div.col-md-10
+                input(type="text" class="form-control input-sm" name="tenure", required="true")
+
+        div.form-group
+            label(class="control-label col-md-2") Balance
+            div.col-md-10
+                input(type="number" class="form-control input-sm" name="balance", required="true")
+
+        div.form-group
+            label(class="control-label col-md-2") Number of Products
+            div.col-md-10
+                input(type="number" class="form-control input-sm" name="numOfProducts", required="true")
+
+        div.form-group
+            label(class="control-label col-md-2") Has Credit Card?
+            div.col-md-10
+                 select(class="form-control input-sm" name="hasCrCard", required="true")
+                                    option(value="1") Yes
+                                    option(value="0") No
+        div.form-group
+            label(class="control-label col-md-2") Active Member?
+            div.col-md-10
+                 select(class="form-control input-sm" name="isActiveMember", required="true")
+                                    option(value="1") Yes
+                                    option(value="0") No
+        div.form-group
+            label(class="control-label col-md-2") Estimated Salary
+            div.col-md-10
+                input(type="number" class="form-control input-sm" name="estimatedSal", required="true")
+
+
+        div.form-group
+            div(class="col-md-2 col-md-offset-10")
+                button(class="btn btn-info btn-block") Predit Churn
+
+
+block javascript
+    script.
+        function save(){
+           var arr =  $('#customer').serializeArray();
+           var obj = {};
+           arr.map(function(data){
+            obj[data.name] = data.value;
+           });
+
+            console.log(obj);
+           $.ajax({
+            url:"/save",
+            type:"POST",
+            data:JSON.stringify(obj),
+            dataType:"json",
+            contentType:"application/json",
+            success:function(res){
+                console.log(res);
+            },
+            error:function(err){
+                console.log(err);
+            }
+           });
+
+           return false;
+        }

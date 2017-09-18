@@ -5,36 +5,60 @@
  */
 package churn.db;
 
+import churn.model.Customer;
+
 import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 
-/**
- * Class representing an DataMiningManager.
- * @author Rishanthan
- */
+
 public class DataMiningManager {
-    
-    /**
-     * Method used to get the prediction results.
-     * @param connection - DB Connection.
-     * @return
-     * @throws SQLException 
-     */
-    public static String[] getPredictionResult(Connection connection) throws SQLException {
+
+    public static Customer getPredictionResult(Customer cus) throws SQLException {
+        String sql = "WITH \n" +
+                "/* START OF SQL FOR NODE: CHURN_DB1 */\n" +
+                "\"N$10010\" as (select '"+cus.age+"' as AGE, \n" +
+                "'"+cus.balance+"' as BALANCE, \n" +
+                "'"+cus.creditScore+"' as CREDITSCORE, \n" +
+                "'"+cus.customerId+"' as CUSTOMERID, \n" +
+                "'"+cus.estimatedCal+"' as ESTIMATEDSAL, \n" +
+                "'null' as EXITED, \n" +
+                "'"+cus.gender+"' as GENDER, \n" +
+                "'"+cus.geography+"' as GEOGRAPHY, \n" +
+                "'"+cus.id+"' as ID,\n" +
+                "'"+cus.hasCrCard+"'as HASCRCARD, \n" +
+                "'"+cus.isActiveMember+"' as ISACTIVEMEMBER , \n" +
+                "'"+cus.noOfProducts+"' as NUMOFPRODUCTS, \n" +
+                "'"+cus.rowNumber+"' as ROWNUMBER, \n" +
+                "'"+cus.surname+"' as SURNAME, \n" +
+                "'"+cus.tenure+"' as TENURE\n" +
+                "from dual\n" +
+                ")\n" +
+                "/* END OF SQL FOR NODE: CHURN_DB1 */\n" +
+                ",\n" +
+                "/* START OF SQL FOR NODE: Apply */\n" +
+                "\"N$10011\" as (SELECT /*+ inline */\n" +
+                "\"ID\"\n" +
+                ", PREDICTION(\"DMUSER\".\"CLAS_DT_1_7\" USING *) \"CLAS_DT_1_7_PRED\"\n" +
+                ", PREDICTION_PROBABILITY(\"DMUSER\".\"CLAS_DT_1_7\" USING *) \"CLAS_DT_1_7_PROB\"\n" +
+                " FROM \"N$10010\" )\n" +
+                "/* END OF SQL FOR NODE: Apply */\n" +
+                "select * from \"N$10011\"";
+
+
         Statement stmt = null;
-        String[] results = new String[2];
+        Connection connection = DBConnection.getConnection();
 
         try {
             stmt = connection.createStatement();
-            ResultSet rs = stmt.executeQuery(QueryConstant.PREDICTIONQUERY);
+            ResultSet rs = stmt.executeQuery(sql);
             while (rs.next()) {
-                results[0]= rs.getString(QueryConstant.MODELPREDICTION);
-                results[1]=rs.getString(QueryConstant.MODELPROBABILITY);
+                cus.exited = rs.getInt(QueryConstant.MODELPREDICTION);
+                cus.probability=rs.getFloat(QueryConstant.MODELPROBABILITY);
 
-                System.out.println("[Log][Info][getPredictionResult]: Prediction: "+ results[0] + "\t");
-                System.out.println("[Log][Info][getPredictionResult]: Probability: "+ results[1] + "\t");
+                System.out.println("[Log][Info][getPredictionResult]: Prediction: "+ cus.exited + "\t");
+                System.out.println("[Log][Info][getPredictionResult]: Probability: " + cus.probability + "\t");
             }
         } catch (SQLException e) {
              System.out.println("[Log][Error][getPredictionResult]: " + e );
@@ -44,51 +68,36 @@ public class DataMiningManager {
             }
         }
         
-        return results;
+        return cus;
     }
-    
-    /**
-     * Method used to insert the user entered new data into database.
-     * @param connection
-     * @param AGE
-     * @param SEX
-     * @param HISTOLOGICTYPE
-     * @param DEGREEOFDIFFE
-     * @param BONE
-     * @param BONEMARROW
-     * @param LUNG
-     * @param PLEURA
-     * @param PERITONEUM
-     * @param LIVER
-     * @param BRAIN
-     * @param SKIN
-     * @param NECK
-     * @param SUPRACLAVICULAR
-     * @param AXILLAR
-     * @param MEDIASTINUM
-     * @param ABDOMINAL
-     * @throws SQLException 
-     */
 
-    // todo
-    public static void insertNewData(Connection connectioon, int AGE, int SEX, int HISTOLOGICTYPE,
-            int DEGREEOFDIFFE, int BONE, int BONEMARROW, int LUNG, int  PLEURA, int PERITONEUM,
-            int LIVER, int BRAIN, int SKIN, int NECK, int SUPRACLAVICULAR, int AXILLAR,
-            int MEDIASTINUM, int ABDOMINAL)throws SQLException {
+    public static void insertNewData(Customer cus)throws SQLException {
         Statement stmt = null;
-        
-        String query = QueryConstant.INPUTDATAINSERTQUERY 
-                + AGE +"," + SEX+"," + HISTOLOGICTYPE +"," + DEGREEOFDIFFE +","
-                + BONE +"," + BONEMARROW +"," + LUNG +"," + PLEURA +","
-                + PERITONEUM +"," + LIVER +"," + BRAIN+"," + SKIN +","
-                + NECK +"," + SUPRACLAVICULAR +"," + AXILLAR +"," + MEDIASTINUM +","
-                + ABDOMINAL + ")";
+        String query = "INSERT INTO CHURN_INPUT " +
+                "(ID, ROWNUMBER, CUSTOMERID, SURNAME, CREDITSCORE, GEOGRAPHY, GENDER, AGE, TENURE, BALANCE, NUMOFPRODUCTS, HASCRCARD, ISACTIVEMEMBER, " +
+                "ESTIMATEDSAL) \n" +
+                "VALUES (SE.nextval, (SELECT  MAX(ROWNUMBER)+1  from DMUSER.CHURN_INPUT), (SELECT  MAX(CUSTOMERID) + 1 from DMUSER.CHURN_INPUT)," +
+                " '"+cus.surname+"'," +
+                " "+cus.creditScore+", " +
+                "'"+cus.creditScore+"'," +
+                " '"+cus.gender+"'," +
+                " '"+cus.age+"'," +
+                " '"+cus.tenure+"', " +
+                ""+cus.balance+"," +
+                " "+cus.noOfProducts+"," +
+                " "+cus.hasCrCard+", " +
+                ""+cus.isActiveMember+", " +
+                ""+cus.estimatedCal+"" +
+                " )\n" +
+                "\n";
 
+        System.out.println(query);
+        Connection connection = DBConnection.getConnection();
         try {
-            stmt = connectioon.createStatement();
+            stmt = connection.createStatement();
             int  rs = stmt.executeUpdate(query);
             if(rs>0){
-                System.out.println("[Log][Info][insertNewData] New values inserted");
+                System.out.println("[Log][Info][insertNewData] New values inserted" + rs);
             }
         } catch (SQLException e) {
             System.out.println("[Log][Error][insertNewData]: " + e );
@@ -99,69 +108,31 @@ public class DataMiningManager {
         }
     }
 
-    /**
-     * Method used to delete the previous data in the database table.
-     * @param connection - DB Connection
-     * @throws SQLException 
-     */
-    public static void deletePreviousData(Connection connection) throws SQLException {
-        
-        if (!checkDataExists(connection)) {
-            return;
-        }
-        // todo
+    public static Customer getLastInsertedCustomer(Customer cus) throws SQLException {
         Statement stmt = null;
-        String query = "DELETE FROM DMUSER.PRIMARY_TUMOR_APPLY";
-        
-        try {
-            stmt = connection.createStatement();
-            int  rs = stmt.executeUpdate(query);
-            
-            if(rs>0){
-                System.out.println("[Log][Succes][deletePreviousData]: Database Cleared");
-            }
-        } catch (SQLException e) {
-             System.out.println("[Log][Error][deletePreviousData]: " + e );
-        } finally {
-            if (stmt != null) {
-                stmt.close();
-            }
-        }
-    }
-    
-    /**
-     * Method used to check whether any data exists in the table.
-     * @param connection - DB Connection.
-     * @return - boolean
-     * @throws SQLException 
-     */
-    public static boolean checkDataExists(Connection connection) throws SQLException{
-        
-        System.out.println("[Log][Info][checkDataExists]: Start");
-        
-        Statement stmt = null;
-        // todo
-        String query = "SELECT * FROM DMUSER.PRIMARY_TUMOR_APPLY";
-        boolean result = true;
-        
+        Connection connection = DBConnection.getConnection();
+        String query = "select * from CHURN_INPUT m  where m.ID = (select MAX(s.ID) FROM CHURN_INPUT s )";
         try {
             stmt = connection.createStatement();
             ResultSet rs = stmt.executeQuery(query);
-            
-            if(rs.next()){
-                result = true;
-            }  
+            while (rs.next()) {
+
+                cus.id= rs.getLong("ID");
+                cus.customerId = rs.getLong("CUSTOMERID");
+                cus.rowNumber = rs.getLong("ROWNUMBER");
+
+                System.out.println("[Log][Info][getLastInsertedCustomer]: Customer: "+ rs.getLong("ID"));
+
+            }
         } catch (SQLException e) {
-             System.out.println("[Log][Error][checkDataExists]:"+ e );
-             result = false;
+            System.out.println("[Log][Error][getLastInsertedCustomer]: " + e );
         } finally {
             if (stmt != null) {
                 stmt.close();
             }
         }
-        
-        System.out.println("[Log][Info][checkDataExists]: Finish");
-        
-        return result;
+
+        return cus;
     }
-}
+
+ }

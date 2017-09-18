@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/churndataset.iml" filepath="$PROJECT_DIR$/churndataset.iml" />
+      <module fileurl="file://$PROJECT_DIR$/churn-dataset.iml" filepath="$PROJECT_DIR$/churn-dataset.iml" />
     </modules>
   </component>
 </project>
